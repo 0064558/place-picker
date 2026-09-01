@@ -17,15 +17,18 @@ export class AvailablePlacesComponent implements OnInit {
   // Sinal para armazenar os lugares disponíveis. Inicialmente, está indefinido.
   places = signal<Place[] | undefined>(undefined);
 
-  isFetching = signal<boolean>(false); // Sinal para indicar se os dados estão sendo buscados. Inicialmente, é falso.
-
-  error = signal<string | null>(null); // Sinal para armazenar mensagens de erro. Inicialmente, é nulo.
-
   // injetando o HttpClient para fazer requisições HTTP.
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient) {}
 
   // injetando o DestroyRef para gerenciar a destruição do componente e evitar vazamentos de memória.
   private destroyRef = inject(DestroyRef);
+
+  // Sinal para indicar se os dados estão sendo buscados. Inicialmente, é falso.
+  isFetching = signal<boolean>(false);
+
+  // Sinal para armazenar mensagens de erro. Inicialmente, é nulo.
+  error = signal<string | null>(null);
+
 
   // O método ngOnInit é chamado quando o componente é inicializado. 
   // Aqui, ele faz uma requisição HTTP para obter os lugares disponíveis.
@@ -38,7 +41,7 @@ export class AvailablePlacesComponent implements OnInit {
         // Usando o operador 'map' para transformar os dados recebidos da requisição.
         map((data) => data.places),
         // Usando o operador 'catchError' para tratar erros na requisição.
-        catchError((error) =>  {
+        catchError((error) => {
           console.log(error);
           return throwError(() => new Error('Failed to fetch places. Please try again later.'))
         })
@@ -64,6 +67,17 @@ export class AvailablePlacesComponent implements OnInit {
     });
   }
 
-
+  // O método onSelectPlace é chamado quando um lugar é selecionado. 
+  // Ele faz uma requisição PUT para atualizar o lugar selecionado no servidor.
+  onSelectPlace(place: Place) {
+    // Fazendo uma requisição PUT para o endpoint '/user-places' do servidor local, enviando o ID do lugar selecionado.
+    this.httpClient.put('http://localhost:3000/user-places', { placeId: place.id })
+    // Usando o método 'subscribe' para se inscrever e receber a resposta da requisição PUT.
+    .subscribe({
+      // O bloco 'next' é chamado quando a requisição PUT é bem-sucedida.
+      next: (data) => console.log('Place selected successfully:', data),
+    
+    });
+  }
 
 }
