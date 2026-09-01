@@ -5,6 +5,7 @@ import { PlacesComponent } from '../places.component';
 import { HttpClient } from '@angular/common/http';
 import { Place } from '../place.model';
 import { catchError, map, throwError } from 'rxjs';
+import { PlacesService } from '../places.service';
 
 @Component({
   selector: 'app-user-places',
@@ -17,9 +18,8 @@ export class UserPlacesComponent implements OnInit {
 
   places = signal<Place[] | undefined>(undefined);
 
-  // injetando o HttpClient para fazer requisições HTTP.
-  constructor(private httpClient: HttpClient) { }
-
+  // injetando o PlacesService para fazer requisições relacionadas a lugares.
+  constructor(private placeService: PlacesService) { }
   // injetando o DestroyRef para gerenciar a destruição do componente e evitar vazamentos de memória.
   private destroyRef = inject(DestroyRef);
 
@@ -33,19 +33,8 @@ export class UserPlacesComponent implements OnInit {
   // Aqui, ele faz uma requisição HTTP para obter os lugares disponíveis.
   ngOnInit(): void {
     this.isFetching.set(true); // Indicando que a busca de dados começou.
-    const subscription = this.httpClient
-      .get<{ places: Place[] }>('http://localhost:3000/user-places') // Fazendo uma requisição GET para o endpoint '/places' do servidor local.
-      // Pipe é usado para encadear operadores que transformam os dados da requisição antes de serem consumidos.
-      .pipe(
-        // Usando o operador 'map' para transformar os dados recebidos da requisição.
-        map((data) => data.places),
-        // Usando o operador 'catchError' para tratar erros na requisição.
-        catchError((error) => {
-          console.log(error);
-          return throwError(() => new Error('Failed to fetch favorite places. Please try again later.'))
-        })
-      )
-      .subscribe({ // Inscrevendo-se para receber os dados da requisição.
+    const subscription = 
+      this.placeService.loadUserPlaces().subscribe({ // Inscrevendo-se para receber os dados da requisição.
         next: (places) => { // Quando os dados são recebidos com sucesso, este bloco é executado.
           this.places.set(places); // Atualizando o sinal 'places' com os dados recebidos.
         },

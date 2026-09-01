@@ -3,8 +3,8 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { Place } from '../place.model';
 import { PlacesComponent } from '../places.component';
 import { PlacesContainerComponent } from '../places-container/places-container.component';
-import { HttpClient } from '@angular/common/http';
 import { catchError, map, throwError } from 'rxjs';
+import { PlacesService } from '../places.service';
 
 @Component({
   selector: 'app-available-places',
@@ -17,8 +17,8 @@ export class AvailablePlacesComponent implements OnInit {
   // Sinal para armazenar os lugares disponíveis. Inicialmente, está indefinido.
   places = signal<Place[] | undefined>(undefined);
 
-  // injetando o HttpClient para fazer requisições HTTP.
-  constructor(private httpClient: HttpClient) {}
+  // injetando o PlacesService para fazer requisições relacionadas a lugares.
+  constructor(private placeService: PlacesService) { }
 
   // injetando o DestroyRef para gerenciar a destruição do componente e evitar vazamentos de memória.
   private destroyRef = inject(DestroyRef);
@@ -34,19 +34,7 @@ export class AvailablePlacesComponent implements OnInit {
   // Aqui, ele faz uma requisição HTTP para obter os lugares disponíveis.
   ngOnInit(): void {
     this.isFetching.set(true); // Indicando que a busca de dados começou.
-    const subscription = this.httpClient
-      .get<{ places: Place[] }>('http://localhost:3000/places') // Fazendo uma requisição GET para o endpoint '/places' do servidor local.
-      // Pipe é usado para encadear operadores que transformam os dados da requisição antes de serem consumidos.
-      .pipe(
-        // Usando o operador 'map' para transformar os dados recebidos da requisição.
-        map((data) => data.places),
-        // Usando o operador 'catchError' para tratar erros na requisição.
-        catchError((error) => {
-          console.log(error);
-          return throwError(() => new Error('Failed to fetch places. Please try again later.'))
-        })
-      )
-      .subscribe({ // Inscrevendo-se para receber os dados da requisição.
+    const subscription = this.placeService.loadAvailablePlaces().subscribe({ // Inscrevendo-se para receber os dados da requisição.
         next: (places) => { // Quando os dados são recebidos com sucesso, este bloco é executado.
           this.places.set(places); // Atualizando o sinal 'places' com os dados recebidos.
         },
@@ -70,13 +58,14 @@ export class AvailablePlacesComponent implements OnInit {
   // O método onSelectPlace é chamado quando um lugar é selecionado. 
   // Ele faz uma requisição PUT para atualizar o lugar selecionado no servidor.
   onSelectPlace(place: Place) {
-    // Fazendo uma requisição PUT para o endpoint '/user-places' do servidor local, enviando o ID do lugar selecionado.
-    this.httpClient.put('http://localhost:3000/user-places', { placeId: place.id })
-    // Usando o método 'subscribe' para se inscrever e receber a resposta da requisição PUT.
-    .subscribe({
+    const subscription = this.placeService.addPlaceToUserPlaces(place.id).subscribe({
       // O bloco 'next' é chamado quando a requisição PUT é bem-sucedida.
       next: (data) => console.log('Place selected successfully:', data),
-    
+    });
+
+    // Registrando uma função de limpeza que será chamada quando o componente for destruído.
+    this.destroyRef.onDestroy(() => {
+      subscription.unsubscribe();
     });
   }
 
