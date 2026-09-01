@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 
 import { Place } from './place.model';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, throwError } from 'rxjs';
+import { catchError, map, tap, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -19,12 +19,18 @@ export class PlacesService {
   }
 
   loadUserPlaces() {
-    return this.fetchPlaces('http://localhost:3000/user-places', 'Failed to fetch favorite places. Please try again later.');
+    return this.fetchPlaces('http://localhost:3000/user-places', 'Failed to fetch favorite places. Please try again later.')
+    .pipe(tap({
+      next: (userPlaces) => this.userPlaces.set(userPlaces),
+    }));
    }
 
-  addPlaceToUserPlaces(placeId: string) {
+  addPlaceToUserPlaces(place: Place) {
+
+    this.userPlaces.update(prevPlaces => [...prevPlaces, place]);
+
     // Fazendo uma requisição PUT para o endpoint '/user-places' do servidor local, enviando o ID do lugar selecionado.
-    return this.httpClient.put('http://localhost:3000/user-places', { placeId })
+    return this.httpClient.put('http://localhost:3000/user-places', { placeId: place.id })
     // Usando o método 'subscribe' para se inscrever e receber a resposta da requisição PUT.
   }
 

@@ -58,7 +58,7 @@ export class AvailablePlacesComponent implements OnInit {
   // O método onSelectPlace é chamado quando um lugar é selecionado. 
   // Ele faz uma requisição PUT para atualizar o lugar selecionado no servidor.
   onSelectPlace(place: Place) {
-    const subscription = this.placeService.addPlaceToUserPlaces(place.id).subscribe({
+    const subscription = this.placeService.addPlaceToUserPlaces(place).subscribe({
       // O bloco 'next' é chamado quando a requisição PUT é bem-sucedida.
       next: (data) => console.log('Place selected successfully:', data),
     });

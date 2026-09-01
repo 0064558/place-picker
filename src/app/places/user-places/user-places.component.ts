@@ -16,7 +16,6 @@ import { PlacesService } from '../places.service';
 })
 export class UserPlacesComponent implements OnInit {
 
-  places = signal<Place[] | undefined>(undefined);
 
   // injetando o PlacesService para fazer requisições relacionadas a lugares.
   constructor(private placeService: PlacesService) { }
@@ -29,15 +28,14 @@ export class UserPlacesComponent implements OnInit {
   // Sinal para armazenar mensagens de erro. Inicialmente, é nulo.
   error = signal<string | null>(null);
 
+  places = this.placeService.loadedUserPlaces;
+
   // O método ngOnInit é chamado quando o componente é inicializado. 
   // Aqui, ele faz uma requisição HTTP para obter os lugares disponíveis.
   ngOnInit(): void {
     this.isFetching.set(true); // Indicando que a busca de dados começou.
     const subscription = 
       this.placeService.loadUserPlaces().subscribe({ // Inscrevendo-se para receber os dados da requisição.
-        next: (places) => { // Quando os dados são recebidos com sucesso, este bloco é executado.
-          this.places.set(places); // Atualizando o sinal 'places' com os dados recebidos.
-        },
         // O bloco 'complete' é chamado quando a requisição é concluída, independentemente de ter sido bem-sucedida ou não.
         complete: () => {
           this.isFetching.set(false); // Indicando que a busca de dados terminou.
