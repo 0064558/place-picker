@@ -50,7 +50,24 @@ export class PlacesService {
     // Usando o método 'subscribe' para se inscrever e receber a resposta da requisição PUT.
   }
 
-  removeUserPlace(place: Place) { }
+  removeUserPlace(place: Place) {
+    // Atualizando o sinal 'userPlaces' com o novo lugar selecionado.
+    const prevPlaces = this.userPlaces();
+
+    // Verificando se o lugar selecionado já está na lista de lugares do usuário. Se não estiver, ele é adicionado.
+    if (prevPlaces.some((p) => p.id === place.id)) {
+      // isso atualiza o sinal 'userPlaces' com uma nova lista que inclui o lugar selecionado, mantendo os lugares anteriores.
+      this.userPlaces.set(prevPlaces.filter((p) => p.id !== place.id));
+    }
+
+    // Fazendo uma requisição DELETE para o endpoint '/user-places/:id' do servidor local, enviando o ID do lugar a ser removido.
+    return this.httpClient.delete(`http://localhost:3000/user-places/${place.id}`)
+      .pipe(catchError(error => {
+        this.userPlaces.set(prevPlaces); // Revertendo a atualização do sinal 'userPlaces' em caso de erro.
+        this.errorService.showError('Failed to remove selected place. Please try again later.'); // Mostrando uma mensagem de erro para o usuário.
+        return throwError(() => new Error('Failed to remove selected place.'));
+      }))
+  }
 
   private fetchPlaces(url: string, errorMessage: string) {
     return this.httpClient

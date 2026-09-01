@@ -52,4 +52,17 @@ export class UserPlacesComponent implements OnInit {
       subscription.unsubscribe();
     });
   }
+
+  onRemovePlace(place: Place) {
+    const subscription = this.placeService.removeUserPlace(place).subscribe({
+      error: (error: Error) => {
+        this.error.set(error.message); // Atualizando o sinal 'error' com a mensagem de erro recebida.
+      },
+    });
+
+    // Registrando uma função de limpeza que será chamada quando o componente for destruído.
+    this.destroyRef.onDestroy(() => {
+      subscription.unsubscribe();
+    });
+  }
 }
