@@ -1,14 +1,17 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 
 import { Place } from './place.model';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, tap, throwError } from 'rxjs';
+import { ErrorService } from './shared/error.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PlacesService {
   private userPlaces = signal<Place[]>([]);
+
+  private errorService = inject(ErrorService);
 
   constructor(private httpClient: HttpClient) { }
 
@@ -31,7 +34,6 @@ export class PlacesService {
     // Atualizando o sinal 'userPlaces' com o novo lugar selecionado.
     const prevPlaces = this.userPlaces();
 
-
     // Verificando se o lugar selecionado já está na lista de lugares do usuário. Se não estiver, ele é adicionado.
     if (!prevPlaces.some((p) => p.id === place.id)) {
       // isso atualiza o sinal 'userPlaces' com uma nova lista que inclui o lugar selecionado, mantendo os lugares anteriores.
@@ -42,6 +44,7 @@ export class PlacesService {
     return this.httpClient.put('http://localhost:3000/user-places', { placeId: place.id })
       .pipe(catchError(error => {
         this.userPlaces.set(prevPlaces); // Revertendo a atualização do sinal 'userPlaces' em caso de erro.
+        this.errorService.showError('Failed to store selected place. Please try again later.'); // Mostrando uma mensagem de erro para o usuário.
         return throwError(() => new Error('Failed to store selected place.'));
       }))
     // Usando o método 'subscribe' para se inscrever e receber a resposta da requisição PUT.
