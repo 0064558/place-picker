@@ -17,6 +17,8 @@ export class AvailablePlacesComponent implements OnInit {
   // Sinal para armazenar os lugares disponíveis. Inicialmente, está indefinido.
   places = signal<Place[] | undefined>(undefined);
 
+  isFetching = signal<boolean>(false); // Sinal para indicar se os dados estão sendo buscados. Inicialmente, é falso.
+
   // injetando o HttpClient para fazer requisições HTTP.
   constructor(private httpClient: HttpClient) {}
 
@@ -26,6 +28,7 @@ export class AvailablePlacesComponent implements OnInit {
   // O método ngOnInit é chamado quando o componente é inicializado. 
   // Aqui, ele faz uma requisição HTTP para obter os lugares disponíveis.
   ngOnInit(): void {
+    this.isFetching.set(true); // Indicando que a busca de dados começou.
     const subscription = this.httpClient
           .get<{ places: Place[]}>('http://localhost:3000/places') // Fazendo uma requisição GET para o endpoint '/places' do servidor local.
           .pipe( // Usando o operador 'map' para transformar os dados recebidos da requisição.
@@ -34,6 +37,9 @@ export class AvailablePlacesComponent implements OnInit {
           .subscribe({ // Inscrevendo-se para receber os dados da requisição.
             next: (places) => { // Quando os dados são recebidos com sucesso, este bloco é executado.
               this.places.set(places); // Atualizando o sinal 'places' com os dados recebidos.
+            },
+            complete: () => {
+              this.isFetching.set(false); // Indicando que a busca de dados terminou.
             }
           });
 
